@@ -17,7 +17,7 @@ try {
 }
 
 const app = express();
-const PORT = parseInt(process.env.PORT) || process.env.DEFAULT_PORT || 3000;
+const PORT = parseInt(process.env.PORT) || 3000;
 
 // Middleware
 app.use(express.json());

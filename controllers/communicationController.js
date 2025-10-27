@@ -125,7 +125,7 @@ module.exports = (eventEmitter) => {
         userId: messageData.userId,
         channel: channel,
         type: messageData.type || 'general',
-        messageType: messageType || 'General Message',
+        messageType: messageType,
         success: true
       });
 

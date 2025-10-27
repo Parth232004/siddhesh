@@ -1,14 +1,15 @@
 class InputValidator {
   // Email validation
   static validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     return emailRegex.test(email);
   }
 
   // Phone number validation (basic international format)
   static validatePhoneNumber(phone) {
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.replace(/\s+/g, ''));
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    const cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+    return phoneRegex.test(cleaned);
   }
 
   // Required field validation
@@ -44,6 +45,7 @@ class InputValidator {
 
     this.validateLength(payload.subject, 'Email subject', 1, 200);
     this.validateLength(payload.body, 'Email body', 1, 10000);
+    this.validateMessageContent(payload.body);
 
     return true;
   }
@@ -59,6 +61,7 @@ class InputValidator {
     }
 
     this.validateLength(payload.message, 'Message', 1, 4096); // WhatsApp limit
+    this.validateMessageContent(payload.message);
 
     return true;
   }
@@ -75,6 +78,7 @@ class InputValidator {
     }
 
     this.validateLength(payload.message, 'Message', 1, 4096); // Telegram limit
+    this.validateMessageContent(payload.message);
 
     return true;
   }
@@ -90,6 +94,7 @@ class InputValidator {
     }
 
     this.validateLength(payload.message, 'Message', 1, 160); // SMS limit
+    this.validateMessageContent(payload.message);
 
     return true;
   }
@@ -129,6 +134,24 @@ class InputValidator {
       .replace(/"/g, '"')
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;');
+  }
+
+  // Validate message content encoding
+  static validateMessageContent(message) {
+    if (typeof message !== 'string') return true;
+
+    // Check for null bytes (potential security issue)
+    if (message.includes('\0')) {
+      throw new Error('Message content contains invalid characters');
+    }
+
+    // Check for extremely long lines (potential DoS)
+    const lines = message.split('\n');
+    if (lines.some(line => line.length > 10000)) {
+      throw new Error('Message contains lines that are too long');
+    }
+
+    return true;
   }
 
   // Validate and sanitize payload

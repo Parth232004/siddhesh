@@ -62,17 +62,17 @@ class KarmaTracker {
   // Calculate karma points based on event type
   calculateKarmaPoints(eventData) {
     const karmaMatrix = {
-      'Order Update': 2,
-      'Delivery Alert': 3,
-      'CRM Alert': 1,
-      'Quick Notification': 1,
-      'Command Response': 2,
-      'Fallback Update': 1,
-      'Urgent Update': 4,
-      'Report': 2
+      'Order Update': parseInt(process.env.KARMA_ORDER_UPDATE) || 2,
+      'Delivery Alert': parseInt(process.env.KARMA_DELIVERY_ALERT) || 3,
+      'CRM Alert': parseInt(process.env.KARMA_CRM_ALERT) || 1,
+      'Quick Notification': parseInt(process.env.KARMA_QUICK_NOTIFICATION) || 1,
+      'Command Response': parseInt(process.env.KARMA_COMMAND_RESPONSE) || 2,
+      'Fallback Update': parseInt(process.env.KARMA_FALLBACK_UPDATE) || 1,
+      'Urgent Update': parseInt(process.env.KARMA_URGENT_UPDATE) || 4,
+      'Report': parseInt(process.env.KARMA_REPORT) || 2
     };
 
-    return karmaMatrix[eventData.messageType] || 1;
+    return karmaMatrix[eventData.messageType] || parseInt(process.env.KARMA_DEFAULT) || 1;
   }
 
 

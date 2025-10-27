@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const ErrorHandler = require('../utils/errorHandler');
 
 class TelegramService {
   constructor() {
@@ -31,8 +32,7 @@ class TelegramService {
         success: true
       };
     } catch (error) {
-      console.error('Telegram message sending failed:', error);
-      throw new Error(`Telegram message sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('telegram', 'send', error);
     }
   }
 
@@ -56,8 +56,7 @@ class TelegramService {
         success: true
       };
     } catch (error) {
-      console.error('Telegram quick notification sending failed:', error);
-      throw new Error(`Telegram quick notification sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('telegram', 'send', error);
     }
   }
 
@@ -92,8 +91,7 @@ class TelegramService {
         success: true
       };
     } catch (error) {
-      console.error('Telegram location notification sending failed:', error);
-      throw new Error(`Telegram location notification sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('telegram', 'send', error);
     }
   }
 
@@ -102,8 +100,7 @@ class TelegramService {
     try {
       return await this.bot.getMe();
     } catch (error) {
-      console.error('Failed to get bot info:', error);
-      throw new Error(`Failed to get bot info: ${error.message}`);
+      throw ErrorHandler.handleServiceError('telegram', 'info', error);
     }
   }
 }

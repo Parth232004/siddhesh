@@ -1,4 +1,5 @@
 const twilio = require('twilio');
+const ErrorHandler = require('../utils/errorHandler');
 
 class SMSService {
   constructor() {
@@ -24,8 +25,7 @@ class SMSService {
         success: true
       };
     } catch (error) {
-      console.error('SMS sending failed:', error);
-      throw new Error(`SMS sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('sms', 'send', error);
     }
   }
 
@@ -47,8 +47,7 @@ class SMSService {
         success: true
       };
     } catch (error) {
-      console.error('Urgent SMS sending failed:', error);
-      throw new Error(`Urgent SMS sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('sms', 'send', error);
     }
   }
 
@@ -81,8 +80,7 @@ class SMSService {
         throw new Error('Fast2SMS API returned false');
       }
     } catch (error) {
-      console.error('Fast2SMS sending failed:', error);
-      throw new Error(`Fast2SMS sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('sms', 'send', error);
     }
   }
 
@@ -107,8 +105,7 @@ class SMSService {
 
       return results;
     } catch (error) {
-      console.error('Bulk SMS sending failed:', error);
-      throw new Error(`Bulk SMS sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('sms', 'send', error);
     }
   }
 
@@ -122,8 +119,7 @@ class SMSService {
         errorMessage: message.errorMessage
       };
     } catch (error) {
-      console.error('Failed to check SMS status:', error);
-      throw new Error(`Failed to check SMS status: ${error.message}`);
+      throw ErrorHandler.handleServiceError('sms', 'status', error);
     }
   }
 }

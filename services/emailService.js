@@ -1,8 +1,9 @@
 const nodemailer = require('nodemailer');
+const ErrorHandler = require('../utils/errorHandler');
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com',
       port: 587,
       secure: false,
@@ -35,8 +36,7 @@ class EmailService {
         success: true
       };
     } catch (error) {
-      console.error('Email sending failed:', error);
-      throw new Error(`Email sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('email', 'send', error);
     }
   }
 
@@ -62,8 +62,7 @@ class EmailService {
         success: true
       };
     } catch (error) {
-      console.error('Zoho API email sending failed:', error);
-      throw new Error(`Zoho API email sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('email', 'send', error);
     }
   }
 }

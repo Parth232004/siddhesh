@@ -1,4 +1,5 @@
 const axios = require('axios');
+const ErrorHandler = require('../utils/errorHandler');
 
 class WhatsAppService {
   constructor() {
@@ -39,8 +40,7 @@ class WhatsAppService {
         success: true
       };
     } catch (error) {
-      console.error('WhatsApp message sending failed:', error.response?.data || error.message);
-      throw new Error(`WhatsApp message sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('whatsapp', 'send', error);
     }
   }
 
@@ -63,8 +63,7 @@ class WhatsAppService {
         success: true
       };
     } catch (error) {
-      console.error('Twilio WhatsApp message sending failed:', error);
-      throw new Error(`Twilio WhatsApp message sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('whatsapp', 'send', error);
     }
   }
 
@@ -103,8 +102,7 @@ class WhatsAppService {
         success: true
       };
     } catch (error) {
-      console.error('WhatsApp template message sending failed:', error.response?.data || error.message);
-      throw new Error(`WhatsApp template message sending failed: ${error.message}`);
+      throw ErrorHandler.handleServiceError('whatsapp', 'send', error);
     }
   }
 }
