@@ -1,5 +1,6 @@
 const axios = require('axios');
 const ErrorHandler = require('../utils/errorHandler');
+const RetryService = require('../utils/retryService');
 
 class WhatsAppService {
   constructor() {
@@ -9,36 +10,46 @@ class WhatsAppService {
   }
 
   async sendMessage(to, message, type = 'delivery') {
+    const retryService = RetryService.create({ maxRetries: 3, baseDelay: 2000 });
+
     try {
-      // Remove any non-numeric characters from phone number
-      const cleanTo = to.replace(/\D/g, '');
+      const result = await retryService.executeWithRetry(
+        async () => {
+          // Remove any non-numeric characters from phone number
+          const cleanTo = to.replace(/\D/g, '');
 
-      const payload = {
-        messaging_product: 'whatsapp',
-        to: cleanTo,
-        type: 'text',
-        text: {
-          body: message
-        }
-      };
+          const payload = {
+            messaging_product: 'whatsapp',
+            to: cleanTo,
+            type: 'text',
+            text: {
+              body: message
+            }
+          };
 
-      const response = await axios.post(
-        `${this.baseURL}/${this.phoneNumberId}/messages`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
+          const response = await axios.post(
+            `${this.baseURL}/${this.phoneNumberId}/messages`,
+            payload,
+            {
+              headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          console.log('WhatsApp message sent successfully:', response.data.messages[0].id);
+
+          return {
+            messageId: response.data.messages[0].id,
+            success: true
+          };
+        },
+        `WhatsApp send to ${to}`,
+        { to, type }
       );
 
-      console.log('WhatsApp message sent successfully:', response.data.messages[0].id);
-
-      return {
-        messageId: response.data.messages[0].id,
-        success: true
-      };
+      return result;
     } catch (error) {
       throw ErrorHandler.handleServiceError('whatsapp', 'send', error);
     }

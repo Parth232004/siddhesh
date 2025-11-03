@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const ErrorHandler = require('../utils/errorHandler');
+const RetryService = require('../utils/retryService');
 
 class EmailService {
   constructor() {
@@ -15,26 +16,36 @@ class EmailService {
   }
 
   async sendEmail(to, subject, body, type = 'transactional') {
+    const retryService = RetryService.create({ maxRetries: 3, baseDelay: 2000 });
+
     try {
-      const mailOptions = {
-        from: process.env.ZOHO_EMAIL,
-        to: to,
-        subject: subject,
-        html: body,
-        // Add headers for different types
-        headers: {
-          'X-Priority': type === 'report' ? '1' : '3',
-          'X-Mailer': 'Logistics Manager Communication Service'
-        }
-      };
+      const result = await retryService.executeWithRetry(
+        async () => {
+          const mailOptions = {
+            from: process.env.ZOHO_EMAIL,
+            to: to,
+            subject: subject,
+            html: body,
+            // Add headers for different types
+            headers: {
+              'X-Priority': type === 'report' ? '1' : '3',
+              'X-Mailer': 'Logistics Manager Communication Service'
+            }
+          };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', info.messageId);
+          const info = await this.transporter.sendMail(mailOptions);
+          console.log('Email sent successfully:', info.messageId);
 
-      return {
-        messageId: info.messageId,
-        success: true
-      };
+          return {
+            messageId: info.messageId,
+            success: true
+          };
+        },
+        `Email send to ${to}`,
+        { to, subject, type }
+      );
+
+      return result;
     } catch (error) {
       throw ErrorHandler.handleServiceError('email', 'send', error);
     }

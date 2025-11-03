@@ -1,5 +1,6 @@
 const twilio = require('twilio');
 const ErrorHandler = require('../utils/errorHandler');
+const RetryService = require('../utils/retryService');
 
 class SMSService {
   constructor() {
@@ -8,22 +9,32 @@ class SMSService {
   }
 
   async sendSMS(to, message, type = 'fallback') {
+    const retryService = RetryService.create({ maxRetries: 3, baseDelay: 2000 });
+
     try {
-      // Ensure message is within SMS limits (160 characters for single SMS)
-      const truncatedMessage = message.length > 160 ? message.substring(0, 157) + '...' : message;
+      const result = await retryService.executeWithRetry(
+        async () => {
+          // Ensure message is within SMS limits (160 characters for single SMS)
+          const truncatedMessage = message.length > 160 ? message.substring(0, 157) + '...' : message;
 
-      const messageResponse = await this.client.messages.create({
-        body: truncatedMessage,
-        from: this.fromNumber,
-        to: to
-      });
+          const messageResponse = await this.client.messages.create({
+            body: truncatedMessage,
+            from: this.fromNumber,
+            to: to
+          });
 
-      console.log('SMS sent successfully:', messageResponse.sid);
+          console.log('SMS sent successfully:', messageResponse.sid);
 
-      return {
-        messageId: messageResponse.sid,
-        success: true
-      };
+          return {
+            messageId: messageResponse.sid,
+            success: true
+          };
+        },
+        `SMS send to ${to}`,
+        { to, type }
+      );
+
+      return result;
     } catch (error) {
       throw ErrorHandler.handleServiceError('sms', 'send', error);
     }

@@ -4,6 +4,11 @@ const { EventEmitter } = require('events');
 const communicationController = require('./controllers/communicationController');
 const karmaTracker = require('./services/karmaTracker');
 const envValidator = require('./utils/envValidator');
+const deliveryLogger = require('./utils/deliveryLogger');
+const apiKeyValidator = require('./utils/apiKeyValidator');
+
+// Initialize delivery logger
+deliveryLogger.initialize();
 
 // Validate environment variables at startup
 try {
@@ -14,6 +19,19 @@ try {
 } catch (error) {
   console.error('❌ Environment validation failed:', error.message);
   process.exit(1);
+}
+
+// Validate API keys and configurations
+try {
+  const apiValidation = await apiKeyValidator.validateAllAPIs();
+  if (!apiValidation.overall) {
+    console.error('❌ CRITICAL: API validation failed. Service cannot start safely.');
+    console.error('   Check your API keys and network connectivity.');
+    process.exit(1);
+  }
+} catch (error) {
+  console.error('❌ API key validation error:', error.message);
+  console.error('   Service starting with limited functionality. Some features may not work.');
 }
 
 const app = express();

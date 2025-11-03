@@ -1,5 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const ErrorHandler = require('../utils/errorHandler');
+const RetryService = require('../utils/retryService');
 
 class TelegramService {
   constructor() {
@@ -8,29 +9,39 @@ class TelegramService {
   }
 
   async sendMessage(chatId, message, type = 'notification') {
+    const retryService = RetryService.create({ maxRetries: 3, baseDelay: 2000 });
+
     try {
-      const options = {};
+      const result = await retryService.executeWithRetry(
+        async () => {
+          const options = {};
 
-      // Add keyboard for command responses
-      if (type === 'command') {
-        options.reply_markup = {
-          keyboard: [
-            [{ text: '/status' }, { text: '/help' }],
-            [{ text: '/orders' }, { text: '/support' }]
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true
-        };
-      }
+          // Add keyboard for command responses
+          if (type === 'command') {
+            options.reply_markup = {
+              keyboard: [
+                [{ text: '/status' }, { text: '/help' }],
+                [{ text: '/orders' }, { text: '/support' }]
+              ],
+              resize_keyboard: true,
+              one_time_keyboard: true
+            };
+          }
 
-      const result = await this.bot.sendMessage(chatId, message, options);
+          const sendResult = await this.bot.sendMessage(chatId, message, options);
 
-      console.log('Telegram message sent successfully:', result.message_id);
+          console.log('Telegram message sent successfully:', sendResult.message_id);
 
-      return {
-        messageId: result.message_id,
-        success: true
-      };
+          return {
+            messageId: sendResult.message_id,
+            success: true
+          };
+        },
+        `Telegram send to ${chatId}`,
+        { chatId, type }
+      );
+
+      return result;
     } catch (error) {
       throw ErrorHandler.handleServiceError('telegram', 'send', error);
     }
